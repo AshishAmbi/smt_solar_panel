@@ -1,0 +1,1 @@
+# smt_solar_panel
