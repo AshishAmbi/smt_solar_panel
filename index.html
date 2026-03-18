@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Solar Tracking Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase (v8 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+
+<body>
+    <div class="dashboard container">
+        <header class="header">
+            <div class="logo-container">
+                <i class="fa-solid fa-solar-panel logo-icon"></i>
+                <h1>SolarEnergy <span>Pro</span></h1>
+            </div>
+            <div class="status-indicator">
+                <div class="dot pulsing" id="connection_dot"></div>
+                <span id="connection_status">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Top Section: 4 Cards -->
+        <section class="top-cards">
+            <!-- Solar Power -->
+            <div class="card glass-effect relative-overflow">
+                <div class="card-glow glow-yellow"></div>
+                <div class="card-header">
+                    <i class="fa-solid fa-bolt icon-yellow"></i>
+                    <h2>Solar Power</h2>
+                </div>
+                <div class="card-body">
+                    <div class="value"><span id="val_solar_power">0.0</span><span class="unit"> W</span></div>
+                    <div class="gauge-container">
+                        <div class="gauge-bar">
+                            <div class="gauge-fill bg-yellow" id="gauge_power"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Battery Level -->
+            <div class="card glass-effect relative-overflow">
+                <div class="card-glow glow-green"></div>
+                <div class="card-header">
+                    <i class="fa-solid fa-battery-three-quarters icon-green"></i>
+                    <h2>Battery Level</h2>
+                </div>
+                <div class="card-body">
+                    <div class="value"><span id="val_battery_voltage">0.0</span><span class="unit"> V</span></div>
+                    <div class="gauge-container">
+                        <div class="gauge-bar">
+                            <div class="gauge-fill bg-green" id="gauge_battery"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Angle -->
+            <div class="card glass-effect relative-overflow">
+                <div class="card-glow glow-blue"></div>
+                <div class="card-header">
+                    <i class="fa-solid fa-compass icon-blue"></i>
+                    <h2>Panel Angle</h2>
+                </div>
+                <div class="card-body">
+                    <div class="value"><span id="val_panel_angle">0</span><span class="unit">°</span></div>
+                    <div class="gauge-container">
+                        <div class="gauge-bar">
+                            <div class="gauge-fill bg-blue" id="gauge_angle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="card glass-effect status-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-power-off icon-purple"></i>
+                    <h2>System Status</h2>
+                </div>
+                <div class="card-body center-val">
+                    <div class="status-badge" id="val_charging_status">--</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Middle Section: 3 Charts -->
+        <section class="middle-charts">
+            <div class="chart-container glass-effect">
+                <div class="chart-title">Solar Power vs Time</div>
+                <div class="canvas-wrapper"><canvas id="chartPower"></canvas></div>
+            </div>
+            <div class="chart-container glass-effect">
+                <div class="chart-title">Panel Voltage vs Time</div>
+                <div class="canvas-wrapper"><canvas id="chartPanelVoltage"></canvas></div>
+            </div>
+            <div class="chart-container glass-effect">
+                <div class="chart-title">Battery Voltage vs Time</div>
+                <div class="canvas-wrapper"><canvas id="chartBatteryVoltage"></canvas></div>
+            </div>
+        </section>
+
+        <!-- Bottom Section: Alerts & Environment -->
+        <section class="bottom-section">
+            <!-- Environment Data -->
+            <div class="env-card glass-effect">
+                <div class="card-header border-bottom">
+                    <i class="fa-solid fa-sun icon-orange"></i>
+                    <h2>Environment Data</h2>
+                </div>
+                <div class="card-body flex-col">
+                    <div class="env-metric">
+                        <div class="label-group">
+                            <i class="fa-regular fa-lightbulb"></i>
+                            <span class="label">Light Intensity</span>
+                        </div>
+                        <span class="value"><span id="val_light_intensity">0</span> Lux</span>
+                    </div>
+                    <div class="env-metric">
+                        <div class="label-group">
+                            <i class="fa-solid fa-plug"></i>
+                            <span class="label">Panel Current</span>
+                        </div>
+                        <span class="value"><span id="val_panel_current">0.0</span> A</span>
+                    </div>
+                    <div class="env-metric">
+                        <div class="label-group">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                            <span class="label">Panel Voltage</span>
+                        </div>
+                        <span class="value"><span id="val_panel_voltage">0.0</span> V</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Data -->
+            <div class="alerts-card glass-effect">
+                <div class="card-header border-bottom">
+                    <i class="fa-solid fa-shield-halved icon-red"></i>
+                    <h2>System Alerts</h2>
+                </div>
+                <div class="card-body alerts-list" id="alerts_container">
+                    <div class="alert item info"><i class="fa-solid fa-circle-notch fa-spin"></i> Waiting for telemetry
+                        data...</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
